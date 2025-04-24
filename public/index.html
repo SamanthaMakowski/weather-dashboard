@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weather Dashboard</title>
+</head>
+<body>
+  <h1>Weather Dashboard</h1>
+  <form id="searchForm">
+    <input type="text" id="cityName" placeholder="Enter City Name" required>
+    <button type="submit">Search</button>
+  </form>
+  <div id="weatherResults"></div>
+  <div id="historyResults"></div>
+
+  <script>
+    document.getElementById('searchForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const cityName = document.getElementById('cityName').value;
+
+      try {
+        const res = await fetch('/api/weather', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cityName }),
+        });
+
+        if (!res.ok) {
+          throw new Error('Failed to fetch weather data');
+        }
+
+        const weatherData = await res.json();
+        console.log('Weather data:', weatherData); 
+
+        document.getElementById('weatherResults').innerHTML = `
+          <h3>Weather for ${cityName}</h3>
+          <p>Temperature: ${weatherData.list[0].main.temp} °C</p>
+          <p>Humidity: ${weatherData.list[0].main.humidity}%</p>
+          <p>Wind Speed: ${weatherData.list[0].wind.speed} m/s</p>
+        `;
+
+        loadHistory();
+      } catch (err) {
+        console.error('Error:', err);
+        document.getElementById('weatherResults').innerHTML = `<p>Error fetching weather data.</p>`;
+      }
+    });
+
+    async function loadHistory() {
+      try {
+        const res = await fetch('/api/weather/history');
+        
+        if (!res.ok) {
+          throw new Error('Failed to load history');
+        }
+
+        const history = await res.json();
+        console.log('Search history:', history); 
+
+        document.getElementById('historyResults').innerHTML = `
+          <h3>Search History</h3>
+          <ul>
+            ${history.map(city => `<li>${city}</li>`).join('')}
+          </ul>
+        `;
+      } catch (err) {
+        console.error('Error loading history:', err);
+        document.getElementById('historyResults').innerHTML = `<p>Error loading history.</p>`;
+      }
+    }
+
+    loadHistory();
+  </script>
+</body>
+</html>
